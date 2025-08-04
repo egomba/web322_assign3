@@ -125,6 +125,8 @@ async function init() {
       }
     });
 
+    app.get('/ping', (req, res) => res.send('pong'));
+
     app.get('/signout', (req, res) => {
       req.session.destroy(() => res.redirect('/'));
     });
