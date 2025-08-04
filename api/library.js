@@ -16,14 +16,9 @@ const { router: borrowReturnRouter, setup: borrowReturnSetup } = require('../rou
 // MongoDB
 const mongoUrl = 'mongodb+srv://egomba:Gomba123@egomba.ut79j.mongodb.net/?retryWrites=true&w=majority&appName=egomba';
 const dbName = 'Web322';
-let cachedClient = null;
-let cachedDb = null;
-
 async function connectToDatabase() {
-  if (cachedDb) return cachedDb;
-  cachedClient = await MongoClient.connect(mongoUrl);
-  cachedDb = cachedClient.db(dbName);
-  return cachedDb;
+  const client = await MongoClient.connect(mongoUrl);
+  return client.db(dbName);
 }
 
 // Setup Handlebars
