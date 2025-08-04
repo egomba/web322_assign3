@@ -12,14 +12,14 @@ const app = express();
 // Handlebars setup
 const hbs = exphbs.create({
   extname: '.hbs',
-  partialsDir: path.join(__dirname, '..', 'views', 'partials'),
+  partialsDir: path.join(__dirname, 'views', 'partials'),
 });
 app.engine('.hbs', hbs.engine);
 app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname, '..', 'views'));
+app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname,'public')));
 
 // Sessions setup (Warning: MemoryStore is not production-ready)
 app.use(
@@ -121,4 +121,13 @@ app.get('/signout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
 
-module.exports = serverless(app);
+if (process.env.VERCEL) {
+  // When running on Vercel serverless environment
+  module.exports = serverless(app);
+} else {
+  // When running locally: start a normal Express server
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running locally at http://localhost:${PORT}`);
+  });
+}
