@@ -63,19 +63,15 @@ app.get('/ping', (req, res) => res.send('pong'));
 
 // Borrow/Return router setup (lazy loaded)
 const { router: borrowReturnRouter, setup: borrowReturnSetup } = require('../routes/borrowReturnRouter');
-app.use(async (req, res, next) => {
-  if (!app.locals.borrowRouterInitialized) {
-    try {
-      const db = await connectToDatabase();
-      borrowReturnSetup({ database: db, loginMiddleware: Login });
-      app.use('/', borrowReturnRouter);
-      app.locals.borrowRouterInitialized = true;
-    } catch (e) {
-      console.error('Router setup failed:', e);
-    }
+(async () => {
+  try {
+    const db = await connectToDatabase();
+    borrowReturnSetup({ database: db, loginMiddleware: Login });
+    app.use('/', borrowReturnRouter);
+  } catch (e) {
+    console.error('Router setup failed:', e);
   }
-  next();
-});
+})();
 
 // Routes
 app.get('/', (req, res) => res.render('landing'));
