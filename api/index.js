@@ -233,6 +233,6 @@ app.get('/signout', (req, res) => {
 
 
 // vercel
-module.exports.handler = serverless(app);
+module.exports = serverless(app);
 
 
