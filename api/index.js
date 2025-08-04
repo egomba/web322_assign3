@@ -6,6 +6,7 @@ const sesh = require(`express-session`);
 const rando = require(`randomstring`);
 const { MongoClient, ObjectId } = require('mongodb');
 const app = express();
+const serverless = require('serverless-http');
 
 //const PORT = 3000;
 
