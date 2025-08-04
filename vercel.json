@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/api/library" },
+    { "source": "/(.*)", "destination": "/api/library" },
     { "source": "/signin", "destination": "/api/library/signin" },
     { "source": "/home", "destination": "/api/library/home" },
     { "source": "/signout", "destination": "/api/library/signout" },
