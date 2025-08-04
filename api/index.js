@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const sesh = require(`express-session`);
 const rando = require(`randomstring`);
-const serverless = require('serverless-http');
+//const serverless = require('serverless-http');
 
 const app = express();
 const PORT = 3000;
@@ -15,7 +15,7 @@ const PORT = 3000;
 
 const hbs = exphbs.create({
     extname: '.hbs',  
-    partialsDir: path.join(__dirname, 'views', 'partials')  
+    partialsDir: path.join(__dirname, '..', 'views', 'partials')  
 });
 
 // handebars as the view enging
@@ -23,13 +23,13 @@ const hbs = exphbs.create({
 
 app.engine('.hbs', hbs.engine);
 app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname,'..', 'views'));
 
 
 // middleware ( to extract info)
 
 app.use( express.urlencoded({extended: true}));
-app.use(express.static(path.join(__dirname, `public`)));
+app.use(express.static(path.join(__dirname, '..', `public`)));
 
 
 //sessions set up
@@ -233,6 +233,6 @@ app.get('/signout', (req, res) => {
 
 
 // vercel
-module.exports = serverless(app);
+module.exports = app;
 
 
