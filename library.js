@@ -61,7 +61,7 @@ function Login(req, res, next) {
 app.get('/ping', (req, res) => res.send('pong'));
 
 // Borrow/Return router setup
-const { router: borrowReturnRouter, setup: borrowReturnSetup } = require('/routes/borrowReturnRouter');
+const { router: borrowReturnRouter, setup: borrowReturnSetup } = require('./routes/borrowReturnRouter');
 
 (async () => {
   try {
