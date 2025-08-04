@@ -62,17 +62,20 @@ function Login(req, res, next) {
 }
 
 // Connect to MongoDB with caching
+let cachedClient = null;
+let cachedDb = null;
+
 async function connectToDatabase() {
-  if (db) return db;
-  try {
-    const client = await MongoClient.connect(mongoUrl);
-    db = client.db(dbName);
-    return db;
-  } catch (err) {
-    console.error('❌ MongoDB connection failed:', err);
-    throw err;
+  if (cachedClient && cachedDb) {
+    return cachedDb;
   }
+  const client = await MongoClient.connect(mongoUrl);  // no options needed
+  const db = client.db(dbName);
+  cachedClient = client;
+  cachedDb = db;
+  return db;
 }
+
 
 // Initialize app routes and start server (or export for Vercel)
 async function init() {
