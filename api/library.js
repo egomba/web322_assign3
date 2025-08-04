@@ -64,7 +64,7 @@ function Login(req, res, next) {
 // Connect to MongoDB with caching
 async function connectToDatabase() {
   if (db) return db;
-  client = await MongoClient.connect(mongoUrl, { useUnifiedTopology: true });
+  client = await MongoClient.connect(mongoUrl);
   db = client.db(dbName);
   return db;
 }
