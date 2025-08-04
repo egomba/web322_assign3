@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign in - WEB322 Library</title>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: sans-serif;">
+
+
+<!-- header partials -->
+   {{> header }}
+
+    <div style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    ">
+        <div style="
+            background-color: rgba(100, 100, 100, 0.7);
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        ">
+            <h1>SIGN IN</h1>
+
+            {{#if error}}
+            <p style="color: red; background: white; padding: 5px; border-radius: 5px;">{{error}}</p>
+            {{/if}}
+
+            <form action="/signin" method="post" id="signin" style="margin-top: 20px;">
+                <input type="text" name="username" placeholder="USERNAME" value="{{username}}" required
+                    style="width: 100%; padding: 10px; margin-bottom: 15px; border: none; border-radius: 5px;">
+                <input type="password" name="password" placeholder="********" required
+                    style="width: 100%; padding: 10px; margin-bottom: 15px; border: none; border-radius: 5px;">
+                <button type="submit" style="
+                    padding: 10px 20px;
+                    background-color: #333;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                ">SIGN IN</button>
+            </form>
+
+            <a href="/" style="display: block; margin-top: 20px; color: white; text-decoration: underline;">
+                Back to Landing Page
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
