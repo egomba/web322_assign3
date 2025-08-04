@@ -64,9 +64,14 @@ function Login(req, res, next) {
 // Connect to MongoDB with caching
 async function connectToDatabase() {
   if (db) return db;
-  client = await MongoClient.connect(mongoUrl);
-  db = client.db(dbName);
-  return db;
+  try {
+    const client = await MongoClient.connect(mongoUrl);
+    db = client.db(dbName);
+    return db;
+  } catch (err) {
+    console.error('❌ MongoDB connection failed:', err);
+    throw err;
+  }
 }
 
 // Initialize app routes and start server (or export for Vercel)
@@ -74,11 +79,8 @@ async function init() {
   try {
     const database = await connectToDatabase();
 
-    // Setup borrow/return routes with db and Login middleware
     borrowReturnSetup({ database, loginMiddleware: Login });
     app.use('/', borrowReturnRouter);
-
-    // Routes
 
     app.get('/', (req, res) => res.render('landing'));
 
@@ -101,7 +103,6 @@ async function init() {
         const clientDoc = await database.collection('clients').findOne({ username });
         const borrowedIDs = clientDoc?.IDBooksBorrowed || [];
 
-        // Compare ObjectId strings properly
         const borrowedBooks = books.filter(book =>
           borrowedIDs.some(id => id.toString() === book._id.toString())
         );
@@ -125,17 +126,26 @@ async function init() {
       req.session.destroy(() => res.redirect('/'));
     });
 
+  } catch (err) {
+    console.error('Failed to initialize app:', err);
+    throw err;  // rethrow to handle in caller
+  }
+}
+
+
+// Run init and start server (locally) or export for Vercel
+(async () => {
+  try {
+    await init();
+
     if (!isVercel) {
       app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
       });
     }
   } catch (err) {
-    console.error('Failed to initialize app:', err);
+    console.error('Initialization failed:', err);
   }
-}
-
-// Run init
-init();
+})();
 
 module.exports = isVercel ? serverless(app) : app;
