@@ -41,7 +41,7 @@ try {
 }
 
 // MongoDB connection caching for serverless:
-const mongoUrl = 'your-mongo-uri';
+const mongoUrl = 'your-mongo-urimongodb+srv://egomba:Gomba123@egomba.ut79j.mongodb.net/?retryWrites=true&w=majority&appName=egomba';
 const dbName = 'Web322';
 
 let cachedClient = null;
