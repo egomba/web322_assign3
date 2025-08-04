@@ -4,18 +4,50 @@ const fs = require('fs');
 const path = require('path');
 const sesh = require(`express-session`);
 const rando = require(`randomstring`);
-//const serverless = require('serverless-http');
-
+const { MongoClient, ObjectId } = require('mongodb');
 const app = express();
-const PORT = 3000;
 
+//const PORT = 3000;
+
+const { router: borrowReturnRouter, setup: borrowReturnSetup } = require('./routes/borrowReturnRouter');
+
+
+
+
+// mongodb 
+
+
+const mongoUrl = 'mongodb+srv://egomba:Gomba123@egomba.ut79j.mongodb.net/?retryWrites=true&w=majority&appName=egomba';
+const dbName = 'Web322';
+
+let db;
+MongoClient.connect(mongoUrl, { useUnifiedTopology: true })
+  .then(client => {
+    console.log('✅ Connected to MongoDB');
+    db = client.db(dbName);
+
+    // Pass db and Login middleware to borrowReturnRouter
+borrowReturnSetup({ database: db, loginMiddleware: Login });
+
+// Use the router for borrow/return routes
+app.use('/', borrowReturnRouter);
+
+
+    // Now start your Express server AFTER db is ready
+    app.listen(PORT, () => {
+      console.log(`Server listening at http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to connect to MongoDB', err);
+  });
 
 
 // heading partial
 
 const hbs = exphbs.create({
     extname: '.hbs',  
-    partialsDir: path.join(__dirname, '..', 'views', 'partials')  
+    partialsDir: path.join(__dirname, 'views', 'partials')  
 });
 
 // handebars as the view enging
@@ -23,13 +55,13 @@ const hbs = exphbs.create({
 
 app.engine('.hbs', hbs.engine);
 app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname,'..', 'views'));
+app.set('views', path.join(__dirname, 'views'));
 
 
 // middleware ( to extract info)
 
 app.use( express.urlencoded({extended: true}));
-app.use(express.static(path.join(__dirname, '..', `public`)));
+app.use(express.static(path.join(__dirname, `public`)));
 
 
 //sessions set up
@@ -70,6 +102,7 @@ function Login(req, res, next) {
 }
 
 
+//ROUTER
 
 
 
@@ -122,93 +155,138 @@ res.redirect(`/home`);
 });
 
 
-// homepage ( if sign in was succesful)
+app.get('/home', Login, async (req, res) => {
+  const username = req.session.user;
 
-app.get(`/home`, Login, (req, res) => { 
-const booksFile = path.join(__dirname, 'books.json');
-let books = [];
   try {
-        const data = fs.readFileSync(booksFile, 'utf8');
-        books = JSON.parse(data);
-    } catch (err) {
-        console.error('Error reading books.json:', err);
-    }
-  
-    const username = req.session.user;
-    let availableBooks = books.filter(book => book.available);
-    let borrowedBooks = books.filter(book => !book.available );
-  res.render (`home`, {
-    username,
-    availableBooks,
-    borrowedBooks
-  });
+    const books = await db.collection('library').find({}).toArray();
+    const clientDoc = await db.collection('clients').findOne({ username });
+    const borrowedIDs = clientDoc?.IDBooksBorrowed || [];
+
+    // Borrowed books = in borrowedIDs
+    const borrowedBooks = books.filter(book =>
+      borrowedIDs.includes(book._id)
+    );
+
+    // Available books = available == true and NOT already borrowed
+    const availableBooks = books.filter(book =>
+      book.available && !borrowedIDs.includes(book._id)
+    );
+
+    // Ensure _id is included and converted to string (if needed)
+    const borrowedBooksStr = borrowedBooks.map(book => ({
+      _id: String(book._id),
+      title: book.title,
+      author: book.author,
+      available: book.available
+    }));
+
+    const availableBooksStr = availableBooks.map(book => ({
+      _id: String(book._id),
+      title: book.title,
+      author: book.author,
+      available: book.available
+    }));
+
+    // Debug
+    console.log('✅ AvailableBooks:', availableBooksStr.map(b => b._id));
+    console.log('✅ BorrowedBooks:', borrowedBooksStr.map(b => b._id));
+
+    res.render('home', {
+      username,
+      availableBooks: availableBooksStr,
+      borrowedBooks: borrowedBooksStr
+    });
+
+  } catch (err) {
+    console.error('Error fetching books or client info:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-/// BORROW / RETURN
+
+
+//borrow return
+
+//debug checker
+function isValidObjectId(id) {
+  return ObjectId.isValid(id) && String(new ObjectId(id)) === id;
+}
+
 // borrow
-app.post(`/borrow`, Login, (req,res) => {
-    let selectedBooks = req.body.books;
-    const username = req.session.user;
-console.log(`borrow`);
-  
 
-    //One book
-    if (!Array.isArray(selectedBooks)) {
-        selectedBooks = [selectedBooks];
-    }
+// app.post('/borrow', Login, async (req, res) => {
+//   let selectedIds = req.body.books;
+//   const username = req.session.user;
 
+//   console.log("borrow");
+//   console.log("Selected IDs:", selectedIds);
+//   console.log("Username:", username);
 
-    const booksPath = path.join(__dirname, `books.json`);
-    let books = JSON.parse(fs.readFileSync(booksPath, `utf-8`));
+//   if (!selectedIds) return res.redirect('/home');
+//   if (!Array.isArray(selectedIds)) selectedIds = [selectedIds];
 
-    const updated = books.map(book => {
-        if (selectedBooks.includes(book.title) && book.available){
-            return {
-                ...book,
-                available: false
-            };
+//   try {
+//     // Find books that are available and match selected IDs (string comparison)
+//     const booksToBorrow = await db.collection('library')
+//       .find({ _id: { $in: selectedIds }, available: true })
+//       .toArray();
 
-        }
-        return book;
-    });
-    
-     fs.writeFileSync(booksPath, JSON.stringify(updated, null, 2));
-     res.redirect('/home');
+//     if (booksToBorrow.length === 0) {
+//       console.log("No books available to borrow with those IDs");
+//       return res.redirect('/home');
+//     }
 
+//     // IDs of books to borrow
+//     const borrowedIDs = booksToBorrow.map(book => book._id);
 
-});
+//     // Mark books as unavailable
+//     await db.collection('library').updateMany(
+//       { _id: { $in: borrowedIDs } },
+//       { $set: { available: false } }
+//     );
 
-//return
-app.post('/return', Login, (req, res) => {
-    let selectedBooks = req.body.books;
-    const username = req.session.user;
-console.log(`return`);
+//     // Add borrowed books to client's borrowed list (no duplicates)
+//     await db.collection('clients').updateOne(
+//       { username },
+//       { $addToSet: { IDBooksBorrowed: { $each: borrowedIDs } } },
+//       { upsert: true }
+//     );
 
-    // onebook
-    if (!Array.isArray(selectedBooks)) {
-        selectedBooks = [selectedBooks];
-    }
-
-    const booksPath = path.join(__dirname, 'books.json');
-    let books = JSON.parse(fs.readFileSync(booksPath, 'utf-8'));
-
-    const updated = books.map(book => {
-        
-        if (selectedBooks.includes(book.title) && !book.available) {
-            return {
-                ...book,
-                available: true  // true = returned
-            };
-        }
-        return book;
-    });
-
-    fs.writeFileSync(booksPath, JSON.stringify(updated, null, 2));
-    res.redirect('/home');
-
-});
+//     res.redirect('/home');
+//   } catch (err) {
+//     console.error('Borrow error:', err);
+//     res.status(500).send('Error processing borrow request');
+//   }
+// });
 
 
+// // return
+// app.post('/return', Login, async (req, res) => {
+//   let selectedIds = req.body.books;
+//   const username = req.session.user;
+//   console.log("return");
+
+//   if (!selectedIds) return res.redirect('/home');
+//   if (!Array.isArray(selectedIds)) selectedIds = [selectedIds];
+
+//   try {
+//     await db.collection('library').updateMany(
+//       { _id: { $in: selectedIds } },
+//       { $set: { available: true } }
+//     );
+
+//     await db.collection('clients').updateOne(
+//       { username },
+//       { $pull: { IDBooksBorrowed: { $in: selectedIds } } }
+//     );
+
+//     res.redirect('/home');
+//   } catch (err) {
+//     console.error('Return error:', err);
+//     res.status(500).send('Error processing return request');
+//   }
+// });
 
 
 
@@ -231,8 +309,7 @@ app.get('/signout', (req, res) => {
 
 // });
 
-
-// vercel
-module.exports = app;
+// Export for Vercel
+module.exports = serverless(app);
 
 
