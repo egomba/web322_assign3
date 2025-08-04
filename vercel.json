@@ -2,6 +2,9 @@
   "rewrites": [
     { "source": "/", "destination": "/api/library" },
     { "source": "/signin", "destination": "/api/library/signin" },
-    { "source": "/home", "destination": "/api/library/home" }
+    { "source": "/home", "destination": "/api/library/home" },
+    { "source": "/signout", "destination": "/api/library/signout" },
+    { "source": "/borrow", "destination": "/api/library/borrow" },
+    { "source": "/return", "destination": "/api/library/return" }
   ]
 }
