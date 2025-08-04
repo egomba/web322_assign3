@@ -19,7 +19,7 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, '..', 'views'));
 
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Sessions setup (Warning: MemoryStore is not production-ready)
 app.use(
@@ -41,7 +41,7 @@ try {
 }
 
 // MongoDB connection caching for serverless:
-const mongoUrl = 'your-mongo-urimongodb+srv://egomba:Gomba123@egomba.ut79j.mongodb.net/?retryWrites=true&w=majority&appName=egomba';
+const mongoUrl = 'mongodb+srv://egomba:Gomba123@egomba.ut79j.mongodb.net/?retryWrites=true&w=majority&appName=egomba';
 const dbName = 'Web322';
 
 let cachedClient = null;
