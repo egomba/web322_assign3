@@ -27,7 +27,7 @@ async function connectToDatabase() {
 // Load users synchronously
 let users = {};
 try {
-  users = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'user.json'), 'utf8'));
+  users = JSON.parse(fs.readFileSync(path.join(__dirname, 'user.json'), 'utf8'));
 } catch (err) {
   console.error('Error reading user.json:', err);
 }
@@ -35,15 +35,15 @@ try {
 // Setup Handlebars
 const hbs = exphbs.create({
   extname: '.hbs',
-  partialsDir: path.join(__dirname, '..', 'views', 'partials'),
+  partialsDir: path.join(__dirname, 'views', 'partials'),
 });
 app.engine('.hbs', hbs.engine);
 app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname, '..', 'views'));
+app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   secret: 'someSecretKey',
   resave: false,
@@ -61,7 +61,7 @@ function Login(req, res, next) {
 app.get('/ping', (req, res) => res.send('pong'));
 
 // Borrow/Return router setup
-const { router: borrowReturnRouter, setup: borrowReturnSetup } = require('../routes/borrowReturnRouter');
+const { router: borrowReturnRouter, setup: borrowReturnSetup } = require('/routes/borrowReturnRouter');
 
 (async () => {
   try {
